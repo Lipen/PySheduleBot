@@ -1,0 +1,15 @@
+<h2>{{ title }}</h2>
+{% if days_list %}
+    <ul style="list-style-type:square">
+    {% for day in days_list %}
+        <li>{{ day }}</li>
+        <ul style="list-style-type:circle">
+        {% for lesson in day.lesson_set.all %}
+            <li>{{ lesson }}</li>
+        {% endfor %}
+        </ul>
+    {% endfor %}
+    </ul>
+{% else %}
+    <h3>Выходной!</h3>
+{% endif %}
