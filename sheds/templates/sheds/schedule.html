@@ -1,0 +1,4 @@
+<code>{{ title }}</code>
+{% if days_list %}{% for day in days_list %}<b>{{ day }}</b>
+{% for lesson in day.lesson_set.all %}<i>{{ lesson }}</i>{% endfor %}{% endfor %}
+{% else %}<b>Выходной!</b> {% endif %}

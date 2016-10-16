@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'djangosecure',
+    'sslserver',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -49,6 +51,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'djangosecure.middleware.SecurityMiddleware',
 ]
 
 ROOT_URLCONF = 'PyShed.urls'
@@ -120,3 +123,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
 STATIC_URL = '/static/'
+
+SECURE_SSL_REDIRECT = False
