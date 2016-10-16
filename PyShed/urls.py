@@ -15,8 +15,10 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
+from sheds import views
 
 urlpatterns = [
+    url(r'^$', views.index, kwargs={'day': 'all'}),
     url(r'^sheds/', include('sheds.urls')),
     url(r'^admin/', admin.site.urls),
 ]
