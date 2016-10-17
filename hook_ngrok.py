@@ -5,7 +5,6 @@ import time
 import traceback
 from multiprocessing import Process, Pipe
 
-token = '294289451:AAEjcnW1o4b4zsJTGI9MG46z4cock-sWC_M'
 port = 8000
 wait_time = 3  # seconds
 
@@ -41,6 +40,10 @@ class WebhookError(RuntimeError):
     pass
 
 
+class TokenError(RuntimeError):
+    pass
+
+
 class BotError(RuntimeError):
     pass
 
@@ -50,7 +53,7 @@ def ngrok_callback():
     os.system('ngrok start base --config ngrok.yml'.format(port))
 
 
-def hook_callback(bot):
+def hook_callback(bot, token):
     print('[*] Requesting public tunnels')
     data = requests.get('http://localhost:4040/api/tunnels')
     print('[*] Searching https tunnel')
@@ -59,7 +62,7 @@ def hook_callback(bot):
             tunnel = t['public_url']
             break
     else:
-        raise NoTunnelError('No https tunnel')
+        raise NoTunnelError
     print('[*] Hooking on public tunnel: {}'.format(tunnel))
 
     url = '{}/sheds/bot/{}'.format(tunnel, token)
@@ -68,10 +71,22 @@ def hook_callback(bot):
         print('[+] Hooked!')
     else:
         print('[-] failure :c')
-        raise WebhookError('Not hooked')
+        raise WebhookError
 
 
 def main():
+    print('[*] Loading token')
+    try:
+        with open('token') as f:
+            token = f.read().strip()
+        if not token:
+            raise TokenError
+    except:
+        print('[-] Token: FAIL')
+        raise TokenError
+    else:
+        print('[+] Token: OK')
+
     print('[*] Loading bot')
     bot = telepot.Bot(token)
 
@@ -80,7 +95,8 @@ def main():
         for k, v in bot.getMe().items():
             print('\t[*] {}: {}'.format(k, v))
     else:
-        raise BotError('Bot not found')
+        print('[-] Bot: FAIL')
+        raise BotError
 
     ngrok_worker = Process(target=ngrok_callback)
     ngrok_worker.start()
@@ -91,7 +107,7 @@ def main():
         hatiko.start()
         hatiko.join()
 
-        hook_worker = ProcessEx(target=hook_callback, args=(bot,))
+        hook_worker = ProcessEx(target=hook_callback, args=(bot, token))
         hook_worker.start()
         hook_worker.join()
 

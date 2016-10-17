@@ -6,13 +6,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from .models import Day
+from . import utils
 
 import datetime
 import json
 import telepot
 import logging
 
-token = '294289451:AAEjcnW1o4b4zsJTGI9MG46z4cock-sWC_M'
+token = utils.load_token()
 TelegramBot = telepot.Bot(token)
 weekdays_ru = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье']
 weekdays_en = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']

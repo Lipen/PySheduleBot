@@ -16,3 +16,9 @@ def setup_logger(logger_name, log_file, level=logging.INFO, propagate=False, str
 
     l.setLevel(level)
     l.propagate = propagate
+
+
+def load_token():
+    with open('token') as f:
+        token = f.read().strip()
+    return token
