@@ -47,7 +47,7 @@ class BotError(RuntimeError):
 
 def ngrok_callback():
     print('[*] Starting ngork')
-    os.system('ngrok start --all'.format(port))
+    os.system('ngrok start base --config ngrok.yml'.format(port))
 
 
 def hook_callback(bot):
@@ -78,7 +78,7 @@ def main():
     if bot:
         print('[+] Bot: OK')
         for k, v in bot.getMe().items():
-            print('[*] {}: {}'.format(k, v))
+            print('\t[*] {}: {}'.format(k, v))
     else:
         raise BotError('Bot not found')
 

@@ -1,0 +1,9 @@
+console_ui: false
+console_ui_color: transparent
+update: false
+log: stdout
+
+tunnels:
+  base:
+    proto: http
+    addr: 8000
