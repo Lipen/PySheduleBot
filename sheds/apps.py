@@ -8,4 +8,4 @@ class ShedsConfig(AppConfig):
 
     def ready(self):
         logging.basicConfig(filename='all.log', level=logging.DEBUG, format='@%(levelname)s %(asctime)s %(message)s', datefmt='[%d/%m/%y] [%I:%M:%S %p]')
-        utils.setup_logger('telegram.bot.requests', 'requests_raw.log', level=logging.DEBUG)
+        utils.setup_logger('telegram.bot.requests', 'requests_raw.log', level=logging.DEBUG, stream=False)
