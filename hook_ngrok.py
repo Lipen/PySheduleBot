@@ -3,7 +3,7 @@ import requests
 import os
 import time
 import traceback
-from multiprocessing import Process, Pipe
+from multiprocessing import Process, Pipe, Queue
 
 port = 8000
 wait_time = 3  # seconds
@@ -48,33 +48,7 @@ class BotError(RuntimeError):
     pass
 
 
-def ngrok_callback():
-    print('[*] Starting ngork')
-    os.system('ngrok start base --config ngrok.yml'.format(port))
-
-
-def hook_callback(bot, token):
-    print('[*] Requesting public tunnels')
-    data = requests.get('http://localhost:4040/api/tunnels')
-    print('[*] Searching https tunnel')
-    for t in data.json()['tunnels']:
-        if t['proto'] == 'https':
-            tunnel = t['public_url']
-            break
-    else:
-        raise NoTunnelError
-    print('[*] Hooking on public tunnel: {}'.format(tunnel))
-
-    url = '{}/sheds/bot/{}'.format(tunnel, token)
-
-    if bot.setWebhook(url):
-        print('[+] Hooked!')
-    else:
-        print('[-] failure :c')
-        raise WebhookError
-
-
-def main():
+def bot_callback(queue):
     print('[*] Loading token')
     try:
         with open('token') as f:
@@ -89,37 +63,88 @@ def main():
 
     print('[*] Loading bot')
     bot = telepot.Bot(token)
-
     if bot:
         print('[+] Bot: OK')
+        s = '[*] Bot info:'
         for k, v in bot.getMe().items():
-            print('\t[*] {}: {}'.format(k, v))
+            s += '\n -  {}: {}'.format(k, v)
+        print(s)
     else:
         print('[-] Bot: FAIL')
         raise BotError
+
+    print('[*] Waiting for public tunnel')
+    tunnel = queue.get()
+    url = '{}/sheds/bot/{}'.format(tunnel, token)
+
+    print('[*] Hooking')
+    if bot.setWebhook(url):
+        print('[+] Hooked!')
+    else:
+        print('[-] Hook: FAIL')
+        raise WebhookError
+
+
+def ngrok_callback():
+    print('[*] Starting ngork')
+    os.system('ngrok start base --config ngrok.yml'.format(port))
+    # os.system('bash -c "while true; do true; done"')
+
+
+def tunnel_callback(queue):
+    print('[*] Requesting public tunnels')
+    data = requests.get('http://localhost:4040/api/tunnels')
+
+    print('[*] Searching https tunnel')
+    for t in data.json()['tunnels']:
+        if t['proto'] == 'https':
+            tunnel = t['public_url']
+            break
+    else:
+        raise NoTunnelError
+
+    print('[*] Found public https tunnel: {}'.format(tunnel))
+    queue.put(tunnel)
+
+def hatiko_callback(wait_time):
+    print('[*] Hatiko: awaits {} seconds...'.format(wait_time))
+    time.sleep(wait_time)
+
+
+def main():
+    queue = Queue()
+
+    bot_worker = ProcessEx(target=bot_callback, args=(queue,))
+    bot_worker.start()
 
     ngrok_worker = Process(target=ngrok_callback)
     ngrok_worker.start()
 
     while 1:
-        hatiko = Process(target=time.sleep, args=(wait_time,))
-        print('[*] Waining for {} seconds...'.format(wait_time))
+        hatiko = Process(target=hatiko_callback, args=(wait_time,))
         hatiko.start()
         hatiko.join()
 
-        hook_worker = ProcessEx(target=hook_callback, args=(bot, token))
-        hook_worker.start()
-        hook_worker.join()
+        tunnel_worker = ProcessEx(target=tunnel_callback, args=(queue,))
+        tunnel_worker.start()
+        tunnel_worker.join()
 
-        e_tb = hook_worker.exception
-        if e_tb:
-            e, tb = e_tb
+        ex = tunnel_worker.exception
+        if ex:
+            e, tb = ex  # (exception, traceback)
             if isinstance(e, NoTunnelError):
-                print('[!] Retrying to hook')
+                print('[!] Hook: retrying')
+                continue
             else:
                 raise e
         else:
             break
+
+    bot_worker.join()
+    ex = bot_worker.exception
+    if ex:
+        e, tb = ex
+        raise e
 
     print('[+] Running hooked ngrok ...')
     ngrok_worker.join()

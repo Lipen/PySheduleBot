@@ -114,7 +114,7 @@ class TelegramBotReceiverView(View):
             return HttpResponseForbidden('Invalid token')
 
         raw = request.body.decode('utf-8')
-        logging.getLogger('telegram.bot.requests').debug(raw)
+        logging.getLogger('telegram.bot.requests').info(raw)
         try:
             payload = json.loads(raw)
         except ValueError:
@@ -128,8 +128,10 @@ class TelegramBotReceiverView(View):
                 except KeyError:
                     return HttpResponseBadRequest('Where is the message?')
             chat_id = msg['chat']['id']
-            # chat_id = msg['from']['id']
             cmd = msg.get('text')
+
+            username = msg['chat'].get('username', '<Anonymous>')
+            logging.getLogger('telegram.bot.conversation').info('@{}: {}'.format(username, cmd))
 
             if cmd == '/start':
                 TelegramBot.sendMessage(chat_id, tbotcmd_start(), parse_mode='HTML')
