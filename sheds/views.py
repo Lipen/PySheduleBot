@@ -5,7 +5,7 @@ from django.views.generic import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-from sheds.models import Day
+from .models import Day
 
 import datetime
 import json
@@ -17,7 +17,6 @@ TelegramBot = telepot.Bot(token)
 weekdays_ru = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье']
 weekdays_en = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 weekdays_b = ['Понедельник', 'Вторник', 'Среду', 'Четверг', 'Пятницу', 'Субботу', 'Воскресенье']
-logging.basicConfig(filename='pyshed.log', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='[%d/%m/%y] [%I:%M:%S %p]')
 
 
 def index(request, **kwargs):
@@ -114,8 +113,7 @@ class TelegramBotReceiverView(View):
             return HttpResponseForbidden('Invalid token')
 
         raw = request.body.decode('utf-8')
-        logger = logging.getLogger('telegram.bot')
-        logger.info(raw)
+        logging.getLogger('telegram.bot.requests').debug(raw)
         try:
             payload = json.loads(raw)
         except ValueError:
