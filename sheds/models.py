@@ -1,13 +1,14 @@
-import datetime
-
 from django.db import models
+
+from . import utils
+
+import datetime
 
 # weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 weekdays = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 
 
 class Day(models.Model):
-    # name = models.CharField('weekday', max_length=32)
     weekday = models.IntegerField('weekday number', default=-1)
 
     def __str__(self):
@@ -37,9 +38,9 @@ class Lesson(models.Model):
 
     def is_today(self):
         if self.day.is_today():
+
             (_, weeknumber, _) = datetime.datetime.now().isocalendar()
-            weeknumber -= 34
-            even = weeknumber % 2 == 0
+            even = utils.is_week_even(weeknumber)
 
             return even and self.week_even or \
                 not even and self.week_odd

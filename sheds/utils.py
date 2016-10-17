@@ -22,3 +22,7 @@ def load_token():
     with open('token') as f:
         token = f.read().strip()
     return token
+
+
+def is_week_even(weeknumber):
+    return (weeknumber - 34) % 2 == 0

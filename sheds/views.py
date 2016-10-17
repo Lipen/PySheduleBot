@@ -63,46 +63,63 @@ def tbotcmd_help(*args):
 def tbotcmd_schedule(*args):
     weekday = args[0]
 
+    now = datetime.datetime.now()
+
     if weekday in ['today', 'сегодня']:
-        weekday = datetime.datetime.now().weekday()
-        context = {
-            'title': 'Расписание на сегодня',
-            'days_list': Day.objects.filter(weekday=weekday)
-        }
+        title = 'Расписание на сегодня'
+        weekday = now.weekday()
+
+        if utils.is_week_even(now.isocalendar()[1]):
+            parity = {'week_even': True}
+        else:
+            parity = {'week_odd': True}
+
+        days = [{'day': day, 'lessons': day.lesson_set.filter(**parity)} for day in Day.objects.filter(weekday=weekday)]
     elif weekday in ['all', 'все', 'всё']:
-        context = {
-            'title': 'Расписание',
-            'days_list': Day.objects.all()
-        }
+        title = 'Расписание'
+        days = [{'day': day, 'lessons': day.lesson_set.all()} for day in Day.objects.all()]
     elif weekday in ['tomorrow', 'завтра']:
-        weekday = (datetime.datetime.now().weekday() + 1) % 7
-        context = {
-            'title': 'Расписание на завтра',
-            'days_list': Day.objects.filter(weekday=weekday)
-        }
+        title = 'Расписание на завтра'
+        tomorrow = now + datetime.timedelta(days=1)
+        weekday = tomorrow.weekday() % 7
+
+        if utils.is_week_even(tomorrow.isocalendar()[1]):
+            parity = {'week_even': True}
+        else:
+            parity = {'week_odd': True}
+
+        days = [{'day': day, 'lessons': day.lesson_set.filter(**parity)} for day in Day.objects.filter(weekday=weekday)]
     elif weekday in ['yesterday', 'вчера']:
-        weekday = (datetime.datetime.now().weekday() - 1) % 7
-        context = {
-            'title': 'Расписание на вчера',
-            'days_list': Day.objects.filter(weekday=weekday)
-        }
+        title = 'Расписание на вчера'
+        yesterday = now - datetime.timedelta(days=1)
+        weekday = yesterday.weekday() % 7
+
+        if utils.is_week_even(yesterday.isocalendar()[1]):
+            parity = {'week_even': True}
+        else:
+            parity = {'week_odd': True}
+
+        days = [{'day': day, 'lessons': day.lesson_set.filter(**parity)} for day in Day.objects.filter(weekday=weekday)]
     else:
         try:
-            weekday = weekdays_en.find(weekday.lower())
+            weekday = int(weekday)
         except:
             try:
-                weekday = weekdays_ru.find(weekday.lower())
+                weekday = weekdays_en.index(weekday.lower())
             except:
                 try:
-                    weekday = int(weekday)
+                    weekday = weekdays_ru.index(weekday.lower())
                 except:
                     weekday = datetime.datetime.now().weekday()
         dayname = weekdays_b[weekday]
 
-        context = {
-            'title': 'Расписание на {}'.format(dayname.lower()),
-            'days_list': Day.objects.filter(weekday=weekday)
-        }
+        title = 'Расписание на {}'.format(dayname.lower())
+        days = [{'day': day, 'lessons': day.lesson_set.all()} for day in Day.objects.filter(weekday=weekday)]
+
+    context = {
+        'title': title,
+        'days_list': days
+    }
 
     return loader.render_to_string('sheds/schedule.html', context)
 
